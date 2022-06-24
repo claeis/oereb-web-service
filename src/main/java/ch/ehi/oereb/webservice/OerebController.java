@@ -120,7 +120,7 @@ import ch.so.agi.oereb.pdf4oereb.Locale;
 @Controller
 public class OerebController {
     
-    private static final String WMS_PARAM_LAYERS = "LAYERS";
+    static final String WMS_PARAM_LAYERS = "LAYERS";
     private static final String WMS_PARAM_WIDTH = "WIDTH";
     private static final String WMS_PARAM_HEIGHT = "HEIGHT";
     private static final String WMS_PARAM_DPI = "DPI";
@@ -1407,11 +1407,11 @@ public class OerebController {
         Map<Long,Integer> restrictionsPointCount=new HashMap<Long,Integer>();
         Map<Long,Double> restrictionsLengthShare=new HashMap<Long,Double>();
         Map<Long,Double> restrictionsAreaShare=new HashMap<Long,Double>();
-        Map<Long,Long> restriction2mapid=new HashMap<Long,Long>();
-        Map<Long,Long> restriction2legendeid=new HashMap<Long,Long>();
+        Map<Long,WmsKey> restriction2mapid=new HashMap<Long,WmsKey>();
+        Map<Long,QualifiedCode> restriction2legendeid=new HashMap<Long,QualifiedCode>();
         Set<Long> concernedRestrictions=new HashSet<Long>();
-        Map<Long,Map<Long,LegendEntryType>> legendPerWms=new HashMap<Long,Map<Long,LegendEntryType>>();
-        Map<Long,Set<Long>> otherLegendCodesPerMap=new HashMap<Long,Set<Long>>();
+        Map<WmsKey,Map<QualifiedCode,LegendEntryType>> legendPerWms=new HashMap<WmsKey,Map<QualifiedCode,LegendEntryType>>();
+        Map<WmsKey,Set<QualifiedCode>> otherLegendCodesPerMap=new HashMap<WmsKey,Set<QualifiedCode>>();
         ArrayList<String> queryTopicCodes = new ArrayList<String>();
         ArrayList<String> querySubTopicCodes = new ArrayList<String>();
         for(TopicCode topicCode:queryTopics) {
@@ -1464,14 +1464,18 @@ public class OerebController {
                     if(g_publiziertbis!=null && today.after(g_publiziertbis)) {
                         continue;
                     }
+                    String wmsUrl=rs.getString("verweiswms_de");
+                    if(wmsUrl==null) {
+                        wmsUrl=rs.getString("verweiswms");
+                    }
+                    WmsKey wmsKey=new WmsKey(wmsUrl);
                     RestrictionOnLandownershipType rest=restrictions.get(e_id);
                     if(rest==null) {
                         
                         RestrictionOnLandownershipType localRest=new RestrictionOnLandownershipType();
                         rest=localRest;
                         restrictions.put(e_id,rest);
-                        restriction2mapid.put(e_id,d_id);
-                        restriction2legendeid.put(e_id,l_id);
+                        restriction2mapid.put(e_id,wmsKey);
                         
                         rest.setLegendText(createMultilingualMTextType(aussage_de));
                         rest.setLawstatus(mapLawstatus(rs.getString("e_rechtsstatus")));
@@ -1489,6 +1493,7 @@ public class OerebController {
                         String typeCodelist=rs.getString("artcodeliste"); 
                         rest.setTypeCode(typeCode);
                         rest.setTypeCodelist(typeCodelist);
+                        restriction2legendeid.put(e_id,new QualifiedCode(typeCodelist,typeCode));
                         
                         OfficeType zustaendigeStelle=new OfficeType();
                         String ea_name=rs.getString("ea_aname_de");
@@ -1502,10 +1507,6 @@ public class OerebController {
                         rest.setResponsibleOffice(zustaendigeStelle);
                         
                         MapType map=new MapType();
-                        String wmsUrl=rs.getString("verweiswms_de");
-                        if(wmsUrl==null) {
-                            wmsUrl=rs.getString("verweiswms");
-                        }
                         wmsUrl = getWmsUrl(bbox, wmsUrl,dpi);
                         map.setReferenceWMS(createMultilingualUri(wmsUrl));
                         if(withImages) {
@@ -1529,14 +1530,14 @@ public class OerebController {
                             setMapBBOX(map,bbox);
                         }
                         
-                        Map<Long,LegendEntryType> legendEntries=legendPerWms.get(d_id);
+                        Map<QualifiedCode,LegendEntryType> legendEntries=legendPerWms.get(wmsKey);
                         // WMS not yet seen?
                         if(legendEntries==null){
-                            otherLegendCodesPerMap.put(d_id, new HashSet<Long>());
+                            otherLegendCodesPerMap.put(wmsKey, new HashSet<QualifiedCode>());
                             // collect legend entries
-                            Map<Long,LegendEntryType> localLegendEntries=new HashMap<Long,LegendEntryType>();
+                            Map<QualifiedCode,LegendEntryType> localLegendEntries=new HashMap<QualifiedCode,LegendEntryType>();
                             legendEntries=localLegendEntries;
-                            legendPerWms.put(d_id,legendEntries);
+                            legendPerWms.put(wmsKey,legendEntries);
                             String stmt="SELECT" + 
                                     "  t_id" + 
                                     (withImages?" ,symbol":"") + 
@@ -1555,6 +1556,7 @@ public class OerebController {
                                     long t_id=rs.getLong("t_id");
                                     final String l_code = rs.getString("artcode");
                                     final String l_codelist = rs.getString("artcodeliste");
+                                    QualifiedCode legendEntryCode=new QualifiedCode(l_codelist,l_code);
                                     LegendEntryType l=new LegendEntryType();
                                     l.setLegendText(createMultilingualTextType(rs.getString("legendetext_de")));
                                     String legendTopic=rs.getString("thema");
@@ -1572,7 +1574,7 @@ public class OerebController {
                                     }
                                     l.setTypeCode(l_code);
                                     l.setTypeCodelist(l_codelist);
-                                    localLegendEntries.put(t_id,l);
+                                    localLegendEntries.put(legendEntryCode,l);
                                 }
                             },d_id);
                         }
@@ -1764,9 +1766,9 @@ public class OerebController {
                         intersection=parcelGeom.intersection(punkt);
                     }
                     
-                    Set<Long> otherLegendCodes=otherLegendCodesPerMap.get(d_id);
+                    Set<QualifiedCode> otherLegendCodes=otherLegendCodesPerMap.get(wmsKey);
                     if(intersection.isEmpty()) {
-                        otherLegendCodes.add(l_id);
+                        otherLegendCodes.add(thisCode);
                         logger.debug("otherLegend {}",thisCode);
                     }else {
                         logger.debug("concernedCode {}",thisCode);
@@ -1850,14 +1852,14 @@ public class OerebController {
             
             // otherLegend ermitteln
             MapType map=rest.getMap();
-            long d_id=restriction2mapid.get(e_id);
-            long l_id=restriction2legendeid.get(e_id);
-            Map<Long,LegendEntryType> legendEntries = legendPerWms.get(d_id);
-            logger.debug("d_id {} legendEntries.size() {}",d_id,legendEntries.size());
-            Set<Long> otherLegendCodes=otherLegendCodesPerMap.get(d_id);
-            logger.debug("d_id {} otherLegendCodes.size() {}",d_id,otherLegendCodes.size());
-            for(Long entryId:legendEntries.keySet()) {
-                if(otherLegendCodes.contains(entryId) && entryId!=l_id) {
+            WmsKey wmsKey=restriction2mapid.get(e_id);
+            QualifiedCode legendeCode=restriction2legendeid.get(e_id);
+            Map<QualifiedCode,LegendEntryType> legendEntries = legendPerWms.get(wmsKey);
+            logger.debug("wmsKey {} legendEntries.size() {}",wmsKey,legendEntries.size());
+            Set<QualifiedCode> otherLegendCodes=otherLegendCodesPerMap.get(wmsKey);
+            logger.debug("wmsKey {} otherLegendCodes.size() {}",wmsKey,otherLegendCodes.size());
+            for(QualifiedCode entryId:legendEntries.keySet()) {
+                if(otherLegendCodes.contains(entryId) && !entryId.equals(legendeCode)) {
                     map.getOtherLegend().add(legendEntries.get(entryId));
                 }
             }
@@ -2163,6 +2165,13 @@ public class OerebController {
         String fixedWmsUrl = builder.build().toUriString();
         return fixedWmsUrl;
     }
+    private WmsKey getWmsKey(String url) {
+        UriComponents builder = UriComponentsBuilder.fromUriString(url).build();
+        String paramLayers=getWmsParam(builder.getQueryParams(),WMS_PARAM_LAYERS);
+        List<String> layers=new ArrayList<String>(builder.getQueryParams().get(paramLayers));
+        layers.sort(null);
+        return new WmsKey(layers.toString());
+    }
     private Integer getLayerIndex(String url, double[] layerOpacity) {
         UriComponents builder = UriComponentsBuilder.fromUriString(url).build();
         String paramLayers=getWmsParam(builder.getQueryParams(),WMS_PARAM_LAYERS);
@@ -2182,7 +2191,7 @@ public class OerebController {
         }
         return null;
     }
-    private String getWmsParam(MultiValueMap<String, String> queryParams, String param) {
+    public static String getWmsParam(MultiValueMap<String, String> queryParams, String param) {
         for(String queryParam:queryParams.keySet()) {
             if(queryParam.equalsIgnoreCase(param)) {
                 return queryParam;
