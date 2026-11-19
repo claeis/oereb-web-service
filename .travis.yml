@@ -5,24 +5,36 @@ jdk:
 
   
 addons:
-  postgresql: "9.6"
+  postgresql: 12
   apt:
     packages:
-    - postgresql-9.6-postgis-2.4
+    - postgresql-postgis
 
 branches:
   only:
     - master
     - stable
 
+env:
+  global:
+  - PGPORT=5433
+  - PGUSER=postgres
+
 install: true
 
 before_script:
-    - psql -c 'create database ili2db;' -U postgres
-    - psql -c 'select version();' -d ili2db -U postgres
-    - psql -c 'create extension postgis;' -d ili2db -U postgres
-    - psql -c 'create extension "uuid-ossp";' -d ili2db -U postgres
-    - psql -c 'select postgis_full_version();' -d ili2db -U postgres
+    - # show port used by different installed versions
+    - grep port /etc/postgresql/*/main/postgresql.conf
+    - # enable same access rules in new installed version 12 as in pre-installed version 13
+    - sudo cp /etc/postgresql/13/main/pg_hba.conf /etc/postgresql/12/main/pg_hba.conf
+    - # restart postgresql because of changes to pg_hba.conf
+    - sudo service postgresql stop
+    - sudo service postgresql start 12
+    - psql -c 'create database ili2db;' -U $PGUSER
+    - psql -c 'select version();' -d ili2db -U $PGUSER
+    - psql -c 'create extension postgis;' -d ili2db -U $PGUSER
+    - psql -c 'create extension "uuid-ossp";' -d ili2db -U $PGUSER
+    - psql -c 'select postgis_full_version();' -d ili2db -U $PGUSER
 
 script: 
   - export TZ="Europe/Zurich"; ./gradlew -Dspring_config_location=file:travis/ asciidoctor build
