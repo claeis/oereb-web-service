@@ -43,6 +43,7 @@ dependencies {
     testCompile group: 'org.xmlunit', name: 'xmlunit-matchers', version: '2.6.4'
     testCompile group: 'org.xmlunit', name: 'xmlunit-core', version: '2.6.4'
     testCompile group: 'org.xmlunit', name: 'xmlunit-placeholders', version: '2.6.4'
+    testCompile group: 'com.vividsolutions', name: 'jts-core', version: '1.14.0'
     
     compile group: 'org.locationtech.jts', name: 'jts-core', version: '1.20.0'
     compile 'commons-io:commons-io:2.6'
@@ -155,7 +156,8 @@ task jaxb {
         ant.xjc(
             destdir: "$generatedXjcSources",
             language: 'XMLSCHEMA',
-            extension: true
+            extension: true,
+			 encoding: 'US-ASCII'
         ){
             schema(dir: "src/main/xsd", includes: "OeREB/**/*.xsd,geometry/1.0/*.xsd")
             binding(dir: "src/main/xjb", includes: "global.xjb,OeREB.xjb,xmldsig-core-schema.xjb,geometry.xjb")
