@@ -106,6 +106,8 @@ import ch.ehi.oereb.schemas.oereb._2_0.extractdata.RealEstateTypeType;
 import ch.ehi.oereb.schemas.oereb._2_0.extractdata.RestrictionOnLandownershipType;
 import ch.ehi.oereb.schemas.oereb._2_0.extractdata.ThemeType;
 import ch.ehi.oereb.schemas.oereb._2_0.extractdata.WebReferenceType;
+import ch.ehi.oereb.schemas.geometry._1_0.BoundaryType;
+import ch.ehi.oereb.schemas.geometry._1_0.Coord;
 import ch.ehi.oereb.schemas.geometry._1_0.CoordType;
 import ch.ehi.oereb.schemas.geometry._1_0.MultiSurfaceType;
 import ch.ehi.oereb.schemas.geometry._1_0.PolylineType;
@@ -1885,11 +1887,103 @@ public class OerebController {
                     map.setImage(createMultilingualBlob(minimalImage));
                 }
             }
+            
+            {
+                
+                ArrayList<GeometryType> geoms = new ArrayList<GeometryType>(rest.getGeometry());
+                geoms.sort(new Comparator<GeometryType>() {
+
+                    @Override
+                    public int compare(GeometryType o1, GeometryType o2) {
+                        Object geom1=o1.getPoint();
+                        if(geom1!=null) {
+                            geom1=o1.getLine();
+                        }
+                        if(geom1!=null) {
+                            geom1=o1.getSurface();
+                        }
+                        Object geom2=o2.getPoint();
+                        if(geom2!=null) {
+                            geom2=o2.getLine();
+                        }
+                        if(geom2!=null) {
+                            geom2=o2.getSurface();
+                        }
+                        if(geom1 instanceof CoordType && geom2 instanceof CoordType) {
+                            return compareCoordType((CoordType)geom1,(CoordType)geom2);
+                        }
+                        if(geom1 instanceof PolylineType && geom2 instanceof PolylineType) {
+                            return comparePolylineType((PolylineType)geom1,(PolylineType)geom2);
+                        }
+                        if(geom1 instanceof SurfaceType && geom2 instanceof SurfaceType) {
+                            return compareSurfaceType((SurfaceType)geom1,(SurfaceType)geom2);
+                        }
+                        if(geom1 instanceof CoordType) {
+                            return -1;
+                        }
+                        if(geom2 instanceof CoordType) {
+                            return 1;
+                        }
+                        if(geom1 instanceof PolylineType) {
+                            return -1;
+                        }
+                        if(geom2 instanceof PolylineType) {
+                            return 1;
+                        }
+                        return 0;
+                    }
+                });
+                rest.getGeometry().clear();
+                rest.getGeometry().addAll(geoms);
+            }
 
             rests.add(rest);
         }        
         concernedTopicsList.addAll(concernedTopics);
         return rests;
+    }
+    private static int compareCoordType(CoordType geom1, CoordType geom2) {
+        return Double.compare(geom1.getC1(),geom2.getC1());
+    }
+    private static int compareCoord(Coord geom1, Coord geom2) {
+        return Double.compare(geom1.getValue().getC1(),geom2.getValue().getC1());
+    }
+    private static int comparePolylineType(PolylineType geom1, PolylineType geom2) {
+        int ret=compareCoord(geom1.getCoord(),geom2.getCoord());
+        if(ret==0) {
+            int len1=geom1.getCoordOrArcOrCustomLineSegment().size();
+            int len2=geom2.getCoordOrArcOrCustomLineSegment().size();
+            ret=Integer.compare(len1,len2);
+            if(ret==0) {
+                for(int i=0;i<len1;i++) {
+                    ret=compareCoord((Coord)geom1.getCoordOrArcOrCustomLineSegment().get(i),(Coord)geom2.getCoordOrArcOrCustomLineSegment().get(i));
+                    if(ret!=0) {
+                        return ret;
+                    }
+                }
+            }
+        }
+        return ret;
+    }
+    private static int compareBoundaryType(BoundaryType geom1, BoundaryType geom2) {
+        return comparePolylineType(geom1.getPolyline().getValue(),geom2.getPolyline().getValue());
+    }
+    private static int compareSurfaceType(SurfaceType geom1, SurfaceType geom2) {
+        int ret=compareBoundaryType(geom1.getExterior(),geom2.getExterior());
+        if(ret==0) {
+            int len1=geom1.getInterior().size();
+            int len2=geom2.getInterior().size();
+            ret=Integer.compare(len1,len2);
+            if(ret==0) {
+                for(int i=0;i<len1;i++) {
+                    ret=compareBoundaryType(geom1.getInterior().get(i),geom2.getInterior().get(i));
+                    if(ret!=0) {
+                        return ret;
+                    }
+                }
+            }
+        }
+        return ret;
     }
     protected MultilingualBlobType createMultilingualBlob(byte[] wmsImage) {
         LocalisedBlobType blob=new LocalisedBlobType();
