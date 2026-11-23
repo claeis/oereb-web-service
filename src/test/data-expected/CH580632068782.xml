@@ -591,7 +591,7 @@
 				<ns3:SymbolRef>${xmlunit.ignore}</ns3:SymbolRef>
 				<ns3:Geometry>
 					<ns3:Point>
-						<ns1:c1>2638372.0</ns1:c1>
+						<ns1:c1>2638371.0</ns1:c1>
 						<ns1:c2>1251421.0</ns1:c2>
 					</ns3:Point>
 					<ns3:Lawstatus>
@@ -606,7 +606,7 @@
 				</ns3:Geometry>
 				<ns3:Geometry>
 					<ns3:Point>
-						<ns1:c1>2638371.0</ns1:c1>
+						<ns1:c1>2638372.0</ns1:c1>
 						<ns1:c2>1251421.0</ns1:c2>
 					</ns3:Point>
 					<ns3:Lawstatus>
@@ -1094,8 +1094,8 @@
 							<ns1:c2>1251421.0</ns1:c2>
 						</ns1:coord>
 						<ns1:coord>
-							<ns1:c1>2638371.0</ns1:c1>
-							<ns1:c2>1251422.0</ns1:c2>
+							<ns1:c1>2638372.0</ns1:c1>
+							<ns1:c2>1251421.0</ns1:c2>
 						</ns1:coord>
 					</ns3:Line>
 					<ns3:Lawstatus>
@@ -1115,8 +1115,8 @@
 							<ns1:c2>1251421.0</ns1:c2>
 						</ns1:coord>
 						<ns1:coord>
-							<ns1:c1>2638372.0</ns1:c1>
-							<ns1:c2>1251421.0</ns1:c2>
+							<ns1:c1>2638371.0</ns1:c1>
+							<ns1:c2>1251422.0</ns1:c2>
 						</ns1:coord>
 					</ns3:Line>
 					<ns3:Lawstatus>
