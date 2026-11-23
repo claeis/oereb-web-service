@@ -9,6 +9,8 @@ addons:
   apt:
     packages:
     - postgresql-postgis
+  ssh_known_hosts:
+  - ftp.umleditor.org
 
 branches:
   only:
@@ -42,11 +44,11 @@ script:
 deploy:
   - provider: script
     skip_cleanup: true
-    script: "ssh-keyscan -H ftp.umleditor.org >> ~/.ssh/known_hosts; ./gradlew -Dspring_config_location=file:travis/ -Drepos_url=${repos_url} -Drepos_pwd=${repos_pwd} -Drepos_usr=${repos_usr} uploadArchives; body='{\"request\": {\"branch\":\"master\"}}'; curl -s -X POST -H \"Content-Type: application/json\" -H \"Accept: application/json\" -H \"Travis-API-Version: 3\" -H \"Authorization: token $travis_token\" -d \"$body\" https://api.travis-ci.org/repo/sogis%2Foereb-web-service-docker/requests"
+    script: "./gradlew -Dspring_config_location=file:travis/ -Drepos_url=${repos_url} -Drepos_pwd=${repos_pwd} -Drepos_usr=${repos_usr} uploadArchives; body='{\"request\": {\"branch\":\"master\"}}'; curl -s -X POST -H \"Content-Type: application/json\" -H \"Accept: application/json\" -H \"Travis-API-Version: 3\" -H \"Authorization: token $travis_token\" -d \"$body\" https://api.travis-ci.org/repo/sogis%2Foereb-web-service-docker/requests"
     on:
       branch: master
   - provider: script
     skip_cleanup: true
-    script: ssh-keyscan -H ftp.umleditor.org >> ~/.ssh/known_hosts; ./gradlew -Dspring_config_location=file:travis/ -Drepos_url=${repos_url} -Drepos_pwd=${repos_pwd} -Drepos_usr=${repos_usr} '-Drelease=' uploadArchives
+    script: ./gradlew -Dspring_config_location=file:travis/ -Drepos_url=${repos_url} -Drepos_pwd=${repos_pwd} -Drepos_usr=${repos_usr} '-Drelease=' uploadArchives
     on:
       branch: stable
