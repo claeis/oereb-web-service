@@ -2,7 +2,7 @@ plugins {
     id 'org.springframework.boot' version '2.7.1'
     id 'io.spring.dependency-management' version '1.0.11.RELEASE'
     id 'java'
-    id 'maven'
+    id 'maven-publish'
     id 'org.asciidoctor.jvm.convert' version '3.3.2'
     id 'org.asciidoctor.jvm.pdf' version '3.3.2'
 }
@@ -36,17 +36,17 @@ configurations {
 dependencies {
     //compile group: 'org.slf4j', name: 'slf4j-api', version: "1.7.25"
     //compile group: 'org.slf4j', name: 'slf4j-simple', version: "1.7.25"
-    testCompile group: 'ch.interlis', name: 'ili2pg', version: '4.7.0'
-    testCompile group: 'ch.interlis', name: 'ili2c-tool', version: '5.2.5'
+    testImplementation group: 'ch.interlis', name: 'ili2pg', version: '4.7.0'
+    testImplementation group: 'ch.interlis', name: 'ili2c-tool', version: '5.2.5'
     testImplementation group: 'ch.ehi', name: 'ehibasics', version: '1.4.1'
-    testCompile group: 'junit', name: 'junit', version: '4.12'
-    testCompile group: 'org.xmlunit', name: 'xmlunit-matchers', version: '2.6.4'
-    testCompile group: 'org.xmlunit', name: 'xmlunit-core', version: '2.6.4'
-    testCompile group: 'org.xmlunit', name: 'xmlunit-placeholders', version: '2.6.4'
-    testCompile group: 'com.vividsolutions', name: 'jts-core', version: '1.14.0'
+    testImplementation group: 'junit', name: 'junit', version: '4.12'
+    testImplementation group: 'org.xmlunit', name: 'xmlunit-matchers', version: '2.6.4'
+    testImplementation group: 'org.xmlunit', name: 'xmlunit-core', version: '2.6.4'
+    testImplementation group: 'org.xmlunit', name: 'xmlunit-placeholders', version: '2.6.4'
+    testImplementation group: 'com.vividsolutions', name: 'jts-core', version: '1.14.0'
     
-    compile group: 'org.locationtech.jts', name: 'jts-core', version: '1.20.0'
-    compile 'commons-io:commons-io:2.6'
+    implementation group: 'org.locationtech.jts', name: 'jts-core', version: '1.20.0'
+    implementation 'commons-io:commons-io:2.6'
     implementation ('io.github.sogis:pdf4oereb:2.0.126') {
     //implementation ('io.github.sogis:app:2.0.47') {
         exclude group: 'org.slf4j', module: 'slf4j-simple'
@@ -55,16 +55,16 @@ dependencies {
     //compile ('ch.so.agi.oereb:pdf4oereb:1.0.+') {
     //	exclude group: 'org.slf4j', module: 'slf4j-simple'
     //}
-    compile group: 'org.postgresql', name: 'postgresql'
-    compile	group: 'javax.xml.bind',name:'jaxb-api', version:'2.3.1'
-    compile	group: 'com.sun.xml.bind',name:'jaxb-core', version:'2.3.0.1'
-    compile	group: 'com.sun.xml.bind',name:'jaxb-impl', version:'2.3.2'
-    compile group: 'javax.activation', name: 'activation', version: '1.1.1'
-    compile("org.springframework.boot:spring-boot-starter-web")
-    compile("org.springframework.boot:spring-boot-starter-jdbc")
-    compile("org.springframework.boot:spring-boot-starter-actuator")
-    compile("org.springframework:spring-oxm:5.3.21")
-    compile('org.springframework.boot:spring-boot-starter-test')
+    implementation group: 'org.postgresql', name: 'postgresql'
+    implementation	group: 'javax.xml.bind',name:'jaxb-api', version:'2.3.1'
+    implementation	group: 'com.sun.xml.bind',name:'jaxb-core', version:'2.3.0.1'
+    implementation	group: 'com.sun.xml.bind',name:'jaxb-impl', version:'2.3.2'
+    implementation group: 'javax.activation', name: 'activation', version: '1.1.1'
+    implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("org.springframework.boot:spring-boot-starter-jdbc")
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
+    implementation("org.springframework:spring-oxm:5.3.21")
+    implementation('org.springframework.boot:spring-boot-starter-test')
     jaxb (
         'com.sun.xml.bind:jaxb-xjc:2.3.1',
         'javax.xml.bind:jaxb-api:2.3.1',
@@ -72,8 +72,6 @@ dependencies {
         'com.sun.xml.bind:jaxb-impl:2.3.2',
         'javax.activation:activation:1.1.1'
     )
-    deployerJars "org.apache.maven.wagon:wagon-ftp:3.3.3"
-    deployerJars "org.apache.maven.wagon:wagon-ssh:3.3.3"
 }
 
 repositories {
@@ -81,7 +79,7 @@ repositories {
     mavenCentral()
     jcenter()
     maven {
-        url "http://jars.interlis.ch"
+        url "https://jars.interlis.ch"
     }
     maven { url "https://s01.oss.sonatype.org/service/local/repositories/releases/content/" }
 }
@@ -175,7 +173,7 @@ jar {
 
 bootJar {
     enabled = true
-    classifier = 'boot'
+    archiveClassifier = 'boot'
 }
 
 asciidoctor {
@@ -190,7 +188,7 @@ asciidoctorPdf {
 
 
 task sourcesJar(type: Jar, dependsOn: classes) {
-    classifier = 'sources'
+    archiveClassifier = 'sources'
     from sourceSets.main.allSource
 }
 
@@ -206,11 +204,11 @@ javadoc{
 }
 
 task javadocJar(type: Jar, dependsOn: javadoc) {
-    classifier = 'javadoc'
+    archiveClassifier = 'javadoc'
     from javadoc.destinationDir
 }
 task testsJar(type: Jar) {
-    classifier = 'tests'
+    archiveClassifier = 'tests'
     //from file('build/test-results/binary')
     from file('build/reports/tests')
 }
@@ -245,24 +243,32 @@ def pomConfig = {
     }
 }
 
-uploadArchives {
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java // Veröffentlicht JAR + generierte POM-Datei
+        }
+    }
     repositories {
-        mavenDeployer {
-            configuration = configurations.deployerJars
-            repository(url: repos_url){
-                authentication(userName: repos_usr, password: repos_pwd)
+        maven {
+            name = 'SftpRepo'
+            url = uri(repos_url)
+            credentials {
+                username = repos_usr
+                password = repos_pwd
             }
         }
     }
 }
 
-uploadTests {
-    repositories {
-        mavenDeployer {
-            configuration = configurations.deployerJars
-            repository(url: repos_url){
-                authentication(userName: repos_usr, password: repos_pwd)
-            }
-        }
-    }
-}
+
+//uploadTests {
+//    repositories {
+//        mavenDeployer {
+//            configuration = configurations.deployerJars
+//            repository(url: repos_url){
+//                authentication(userName: repos_usr, password: repos_pwd)
+//            }
+//        }
+//    }
+//}
