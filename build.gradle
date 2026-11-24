@@ -11,7 +11,7 @@ apply plugin: 'io.spring.dependency-management'
 
 group 'ch.ehi.oereb'
 
-version '2.1.0'+System.getProperty('release','-SNAPSHOT')
+version '2.1.1'+System.getProperty('release','-SNAPSHOT')
 
 sourceCompatibility = "11"
 targetCompatibility = "11"
@@ -203,11 +203,11 @@ javadoc{
     //options.addStringOption('Xdoclint:none', '-quiet')
 }
 
-task javadocJar(type: Jar, dependsOn: javadoc) {
+task javadocJar(type: Jar, dependsOn: [javadoc,asciidoctor]) {
     archiveClassifier = 'javadoc'
     from javadoc.destinationDir
 }
-task testsJar(type: Jar) {
+task testsJar(type: Jar, dependsOn: test) {
     archiveClassifier = 'tests'
     //from file('build/test-results/binary')
     from file('build/reports/tests')
